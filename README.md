@@ -1,7 +1,3 @@
-<p align="center">
-<img src="./images/puppy-raffle.svg" width="400" alt="puppy-raffle">
-<br/>
-
 # Puppy Raffle
 
 This project is to enter a raffle to win a cute dog NFT. The protocol should do the following:
@@ -13,31 +9,10 @@ This project is to enter a raffle to win a cute dog NFT. The protocol should do 
 4. Every X seconds, the raffle will be able to draw a winner and be minted a random puppy
 5. The owner of the protocol will set a feeAddress to take a cut of the `value`, and the rest of the funds will be sent to the winner of the puppy.
 
-- [Contest Details](#contest-details)
-  - [Contest Details](#contest-details-1)
-    - [Prize Pool](#prize-pool)
-  - [Stats](#stats)
-- [Puppy Raffle](#puppy-raffle)
-- [Getting Started](#getting-started)
-  - [Requirements](#requirements)
-  - [Quickstart](#quickstart)
-    - [Optional Gitpod](#optional-gitpod)
-- [Usage](#usage)
-  - [Testing](#testing)
-    - [Test Coverage](#test-coverage)
-- [Audit Scope Details](#audit-scope-details)
-  - [Compatibilities](#compatibilities)
-- [Roles](#roles)
-- [Known Issues](#known-issues)
 
 # Getting Started
 
-## Requirements
 
-- [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-  - You'll know you did it right if you can run `git --version` and you see a response like `git version x.x.x`
-- [foundry](https://getfoundry.sh/)
-  - You'll know you did it right if you can run `forge --version` and you see a response like `forge 0.2.0 (816e00b 2023-03-16T00:05:26.396218Z)`
 
 ## Quickstart
 
@@ -47,13 +22,7 @@ cd 4-puppy-raffle-audit
 make
 ```
 
-### Optional Gitpod
 
-If you can't or don't want to run and install locally, you can work with this repo in Gitpod. If you do this, you can skip the `clone this repo` part.
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#github.com/Cyfrin/3-passwordstore-audit)
-
-# Usage
 
 ## Testing
 
@@ -95,4 +64,4 @@ Player - Participant of the raffle, has the power to enter the raffle with the `
 
 # Known Issues
 
-None
+# Finding Can Be Found At `./audit-data`
