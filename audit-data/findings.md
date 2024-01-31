@@ -243,12 +243,17 @@ Find More About `ReentrancyGuard` From  <a href = "https://docs.openzeppelin.com
 
 
 
-### [S-#] TITLE (Root Cause + Impact)
+### [H-#] Generating Random Random Number On Chain Is Predictable, Leads To Successfully Guess Winner.
 
-**Description:** 
+**Description:** At The `PuppyRaffle::selectWinner` function selecting wiiner index using on cahin random winner is highly vunrable `uint256 winnerIndex =int256(keccak256(abi.encodePacked(msg.sender, block.timestamp, block.difficulty))) % players.length;`. Here `block.timestamp` is adjsutable by the miner and `block.difficulty` is not a tru difficulty it come from previous block which is open to miner. See more details on <a href="https://eips.ethereum.org/EIPS/eip-4399">`EIP-4339`</a> at security sections.
 
-**Impact:** 
 
-**Proof of Concept:**
 
-**Recommended Mitigation:** 
+**Impact:** Winner Can Be Predicted & Made By Miners Choice.
+
+
+**Recommended Mitigation:** Generating Random Number On-Chain Is Not Recommended. User One Chain Number Generation
+Services of Chainlink Like <a href="https://docs.chain.link/vrf">`Chainlink VRF`</a> is Recommended.
+
+
+
