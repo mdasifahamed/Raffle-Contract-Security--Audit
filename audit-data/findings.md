@@ -257,3 +257,73 @@ Services of Chainlink Like <a href="https://docs.chain.link/vrf">`Chainlink VRF`
 
 
 
+### [M-#] Without Checks Arithmatic Opeartions In Sloidity Before Version 0.8.0 Leads To Oveflow/UnderFlow Intergers, Has Impact On The Value.
+
+**Description:** At The `PuppyRaffle::selectWinner` Function There Are  Some Arithmatic Opeartions Have Been Done.
+
+```javascript
+@>      uint256 prizePool = (totalAmountCollected * 80) / 100;
+        uint256 fee = (totalAmountCollected * 20) / 100;
+        totalFees = totalFees + uint64(fee);
+```
+Above The Operation Result Must Have Checks After The Operations. Because The Contract Has Been Written In Solidity Version 0.7.6 And In That Version Solidity Does Not Chekcs For OverFlowAnd UnderFlow. From The Solidity Version 0.8.0 
+It Checks For OverFlow And UnderFlow.
+
+
+**Impact:** Unexpected/Arbitary Result.
+
+
+**Proof of Concept:** Below The Is A Contract Nemed `Oveflow` in The `PuppuyRaffle.t.sol` File And Also There Is A 
+Test Case Named `testOveFlow` You Can Run The Test Fucntion See The Output In The Console From The Command Line
+
+type and hit enter
+```
+forge test --match-test testOveFlow -vvv
+
+```
+
+<details>
+<summary>Contract  Overflow</summary>
+
+```javascript
+contract OverFlow{
+    uint8 public amount;
+
+    function increment(uint8 _number) public{
+        amount = amount + _number;
+    }
+}
+```
+</details>
+
+<details>
+
+<summary>OverFlowTest</summary>
+
+```javascript
+    function testOveFlow () public {
+
+        OverFlow overFlow = new OverFlow();
+
+        overFlow.increment(255);
+        console.log("Highest Value in Uint8",overFlow.amount());
+        assert(overFlow.amount()==255);
+
+        // Now If We try  to Add More One In The Amount Then it Will Set To zero 
+        // Like 255+ 1 =0; as uint8 has 2^8-1 = 255 which highest value in iteger it can store 
+
+         overFlow.increment(1);
+        console.log("Overflown After Addition Value in Uint8",overFlow.amount());
+        assert(overFlow.amount()==0);
+
+
+    }
+```
+</details>
+
+
+
+**Recommended Mitigation:** There Are Few Mitigation Steps That Van Be Taken.
+1. Check For Expected Value After The Arithmatic Opeartion.
+2. Update The Version Of The Solidity To 0.8.0 Or More.
+3. Use Libray From <a href ="https://docs.openzeppelin.com/contracts/4.x/utilities#math">`Openzeppelin Math Libray`</a>  For Arithmatic Operation.

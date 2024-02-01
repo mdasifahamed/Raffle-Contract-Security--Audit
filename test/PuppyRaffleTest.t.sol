@@ -296,13 +296,32 @@ contract PuppyRaffleTest is Test {
 
         assert(address(puppyRaffle).balance==0);
 
+    }
 
 
 
+    function testOveFlow () public {
+
+        OverFlow overFlow = new OverFlow();
+
+        overFlow.increment(255);
+        console.log("Highest Value in Uint8",overFlow.amount());
+        assert(overFlow.amount()==255);
+
+        // Now If We try  to Add More One In The Amount Then it Will Set To zero 
+        // Like 255+ 1 =0; as uint8 has 2^8-1 = 255 which highest value in iteger it can store 
+
+         overFlow.increment(1);
+        console.log("Overflown After Addition Value in Uint8",overFlow.amount());
+        assert(overFlow.amount()==0);
 
 
     }
 }
+
+
+
+// Helper Contracts
 contract ReentraceyAttackOnPuppyRaffle {
 
     PuppyRaffle puppyRafle;
@@ -338,5 +357,13 @@ contract ReentraceyAttackOnPuppyRaffle {
 
     receive() external payable {
         _steal();
+    }
+}
+
+contract OverFlow{
+    uint8 public amount;
+
+    function increment(uint8 _number) public{
+        amount = amount + _number;
     }
 }
