@@ -328,13 +328,48 @@ contract OverFlow{
 2. Update The Version Of The Solidity To 0.8.0 Or More.
 3. Use Libray From <a href ="https://docs.openzeppelin.com/contracts/4.x/utilities#math">`Openzeppelin Math Libray`</a>  For Arithmatic Operation.
 
-## [L-1] Solidity pragma should be specific, not wide.
+
+# Gas 
+### [G-1] Unchanged varibales shloud be used with keword immubale , constant.
+
+Reading from state varible is more expensive than reading from immutable or constant.
+
+**Recommended Mitigation**
+
+- At `PuppyRaffle::raffleDuration` should be `immutable`.
+- At `PuppyRaffle::commonImageUri` should be `constant`.
+- At `PuppyRaffle::rareImageUri` should be `constant`.
+- At `PuppyRaffle::legendaryImageUri` should be `constant`.
+
+
+
+### [G-2] Storage varibales in loops should be cached. 
+
+Using `players.length` to read from states is gas exepnsive, using canced varible in memory is gas efficient.
+
+```diff
+-     for (uint256 i = 0; i < players.length - 1; i++) {
+-            for (uint256 j = i + 1; j < players.length; j++) {
+-               require(players[i] != players[j], "PuppyRaffle: Duplicate player");
+-            }
+-        }
+
++   uint256 totalPlayers = players.length;
++   for (uint256 i = 0; i < totalPlayers - 1; i++) {
++            for (uint256 j = i + 1; j < totalPlayers; j++) {
++                require(players[i] != players[j], "PuppyRaffle: Duplicate player");
++            }
++        }
+```
+
+
+### [L-1] Solidity pragma should be specific, not wide.
 
 It is recommended to use sepecific verison of Solidity in the `PuupyRaffle.sol` use `pragma solidity 0.8.0` instead of `pragma solidity ^0.7.6`.
 
 - Found in  `./src/PuupyRaffle.sol`.
 
-## [L-2] using outdated Version of Solidity is not recommended.
+### [L-2] using outdated Version of Solidity is not recommended.
 
 `solc` frequently releases new compiler versions. Using an old version prevents access to new Solidity security checks. We also recommend avoiding complex `pragma` statement.
 
@@ -342,7 +377,7 @@ It is recommended to use sepecific verison of Solidity in the `PuupyRaffle.sol` 
 Deploy with the following Solidity versions:
 - 0.8.18
 
-## The recommendations take into account:
+### The recommendations take into account:
 
 - Risks related to recent releases
 - Risks of complex code generation changes
@@ -350,4 +385,14 @@ Deploy with the following Solidity versions:
 - Risks of known bugs
 
 Use a simple pragma version that allows any of these versions. Consider using the latest version of Solidity for testing.
+
+### [L-3]: Missing checks for `address(0)` when assigning values to address state variables
+
+Assigning values to address state variables without checking for `address(0)`.
+
+- Found in src/PuppyRaffle.sol [Line: 62](src/PuppyRaffle.sol#L62)
+
+	```solidity
+	        feeAddress = _feeAddress;
+	```
 
