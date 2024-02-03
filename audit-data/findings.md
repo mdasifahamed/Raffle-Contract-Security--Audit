@@ -327,3 +327,9 @@ contract OverFlow{
 1. Check For Expected Value After The Arithmatic Opeartion.
 2. Update The Version Of The Solidity To 0.8.0 Or More.
 3. Use Libray From <a href ="https://docs.openzeppelin.com/contracts/4.x/utilities#math">`Openzeppelin Math Libray`</a>  For Arithmatic Operation.
+
+## [L-1] Solidity pragma should be specific, not wide.
+
+It is recommended to use sepecific verison of Solidity in the `PuupyRaffle.sol` use `pragma solidity 0.8.0` instead of `pragma solidity ^0.7.6`.
+
+- Found in  `./src/PuupyRaffle.sol`.
