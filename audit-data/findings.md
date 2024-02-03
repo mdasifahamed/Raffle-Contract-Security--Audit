@@ -329,6 +329,28 @@ contract OverFlow{
 3. Use Libray From <a href ="https://docs.openzeppelin.com/contracts/4.x/utilities#math">`Openzeppelin Math Libray`</a>  For Arithmatic Operation.
 
 
+
+### [L-1] At `PuppyRaffle::getPlayersIndex` for non-exiting it returns 0 (Zero), but i checks the player insex from the arry and in the array at index 0(Zero) there will players which perheps create confusion among the player that he/she is not active.
+
+**Description:** It perheps create confusion among the players as `PuppyRaffle::getPlayersIndex` returns 0 for non-exiting player after the checking from array it but in array at index 0 ther must be some elememnet/address which is not correct result.
+
+**Impact:** A player at `PuppyRaffle::players` array at index 0 and call `PuppyRaffle::getPlayersIndex` to get his index 
+he will get 0 and perheps he can think that he is not in the array and try to re enter the raffle.
+
+**Proof of Concept:**
+
+1. Player enter the raffle for first and get index position 0 at `PuppyRaffle::players` array
+
+2. And try to get his index by calling `PuppyRaffle::getPlayersIndex` and get return index 0 .
+
+3. As per natspect documention he perheps think he is not in the raffle.
+
+
+**Recommended Mitigation:** The easiet way to prevent this is use revert the transaction if the player is not in the array and return 0 zero index for exiting player.
+
+or better can be used `int128` which will return `-1` if the players is not in the array
+
+
 # Gas 
 ### [G-1] Unchanged varibales shloud be used with keword immubale , constant.
 
@@ -395,4 +417,23 @@ Assigning values to address state variables without checking for `address(0)`.
 	```solidity
 	        feeAddress = _feeAddress;
 	```
+
+### [L-4]: Using Magic numbers in the codebase is not recommeded.
+
+Using number literals on the codebase is confusing to read use constant value for increasing readability of the code.
+
+- Instead using lietrals 
+
+```javascript
+uint256 prizePool = (totalAmountCollected * 80) / 100;
+uint256 fee = (totalAmountCollected * 20) / 100; 
+```
+- Replace `20`,`80`,`100` With Constant
+
+```javascript
+uint256 private constant PRIZE_POOL=80
+uint256 private constant FEE=20
+uint256 private constant PRECISION=100 
+```
+
 
