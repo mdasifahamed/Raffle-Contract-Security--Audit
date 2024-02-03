@@ -333,3 +333,21 @@ contract OverFlow{
 It is recommended to use sepecific verison of Solidity in the `PuupyRaffle.sol` use `pragma solidity 0.8.0` instead of `pragma solidity ^0.7.6`.
 
 - Found in  `./src/PuupyRaffle.sol`.
+
+## [L-2] using outdated Version of Solidity is not recommended.
+
+`solc` frequently releases new compiler versions. Using an old version prevents access to new Solidity security checks. We also recommend avoiding complex `pragma` statement.
+
+##Recommendation
+Deploy with the following Solidity versions:
+- 0.8.18
+
+## The recommendations take into account:
+
+- Risks related to recent releases
+- Risks of complex code generation changes
+- Risks of new language features
+- Risks of known bugs
+
+Use a simple pragma version that allows any of these versions. Consider using the latest version of Solidity for testing.
+
