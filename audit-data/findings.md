@@ -389,6 +389,27 @@ forge test --match-test testDosAttack
 **Recommended Mitigation:** The Mitigation Can Be Done By Using `Push and Pull` method. Let the User Store Their Fund on the Contract. And After The SuccecssFull raflle Let The Winner To Pull Their Prize From The Contract. Which Also Reduce The Risk Of Using Low-Level Call.
 
 
+### [M-3] Mishandling Of Ether At `PuppyRaffle::withdrawFees` funds will locked and no be able to withdraw fess.
+
+**Description:** At  `PuppyRaffle::withdrawFees` there is  validation of contract balance
+
+```javascript
+
+@>    require(address(this).balance == uint256(totalFees), "PuppyRaffle: There are currently players active!");
+
+```
+if the some malicious actor send some ether toh contract and the contract balance wil be always greater than `Pupuraffle::totalFees` and and make the statement always true which results reverts the transaction leads to locking the fund.
+**Impact:** Fee Will Not Be Able to Withdraw. 
+
+**Proof of Concept:**
+1. Some Malicious User Send Some Ether To The Contract.
+2. Which Increase The Contract Balance.
+3. Which Also Makes The Balance Of The Contract Cotract More Than The Fee Afre The Raffle.
+4. And This Result Not To be Abble To Withdraw Fees. 
+
+**Recommended Mitigation:** Don't Compare It Contract Balance, If The Fee Amount is reached Widthdrwa The Fees. 
+
+
 
 ### [L-1] At `PuppyRaffle::getPlayersIndex` for non-exiting it returns 0 (Zero), but i checks the player insex from the arry and in the array at index 0(Zero) there will players which perheps create confusion among the player that he/she is not active.
 
@@ -496,8 +517,5 @@ uint256 private constant PRIZE_POOL=80
 uint256 private constant FEE=20
 uint256 private constant PRECISION=100 
 ```
-
-reports left to write are overflow check with `testTotalFeesOverflow` , smart wallet refused to accept ether if it is not set fallback or receive fucntion
-report mishandling of ether at the withdrw fees, events missing
 
 
