@@ -1,3 +1,115 @@
+---
+title: PuppyRaffle Audit Report
+author: MD  ASIF AHAMED
+date: FEB 7, 2024
+header-includes:
+  - \usepackage{titling}
+  - \usepackage{graphicx}
+---
+
+\begin{titlepage}
+    \centering
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.5\textwidth]{Logo.pdf} 
+    \end{figure}
+    \vspace*{2cm}
+    {\Huge\bfseries PuppyRaffle Audit Report\par}
+    \vspace{1cm}
+    {\Large Version 1.0\par}
+    \vspace{2cm}
+    {\Large\itshape MD ASID AHAMED \par}
+    \vfill
+    {\large \today\par}
+\end{titlepage}
+
+\maketitle
+
+<!-- Your report starts here! -->
+
+Prepared by: [Md Asif Ahamed](https://cyfrin.io)
+Lead Auditors 
+- Md Asif Ahamed
+
+# Table of Contents
+- [Table of Contents](#table-of-contents)
+- [Protocol Summary](#protocol-summary)
+- [Disclaimer](#disclaimer)
+- [Risk Classification](#risk-classification)
+- [Audit Details](#audit-details)
+  - [Scope](#scope)
+  - [Roles](#roles)
+- [Executive Summary](#executive-summary)
+  - [Issues found](#issues-found)
+- [Findings](#findings)
+- [High](#high)
+- [Medium](#medium)
+- [Low](#low)
+- [Informational](#informational)
+- [Gas](#gas)
+
+# Protocol Summary
+
+
+This project is to enter a raffle to win a cute dog NFT. The protocol should do the following:
+
+1. Call the `enterRaffle` function with the following parameters:
+   1. `address[] participants`: A list of addresses that enter. You can use this to enter yourself multiple times, or yourself and a group of your friends.
+2. Duplicate addresses are not allowed
+3. Users are allowed to get a refund of their ticket & `value` if they call the `refund` function
+4. Every X seconds, the raffle will be able to draw a winner and be minted a random puppy
+5. The owner of the protocol will set a feeAddress to take a cut of the `value`, and the rest of the funds will be sent to the winner of the puppy.
+
+
+# Disclaimer
+
+I, Md Asif Ahamed made all effort to find as many vulnerabilities in the code in the given time period, but holds no responsibilities for the the findings provided in this document. A security audit by meis not an endorsement of the underlying business or product. The audit was time-boxed and the review of the code was solely on the security aspects of the solidity implementation of the contracts.
+
+# Risk Classification
+
+|            |        | Impact |        |     |
+| ---------- | ------ | ------ | ------ | --- |
+|            |        | High   | Medium | Low |
+|            | High   | H      | H/M    | M   |
+| Likelihood | Medium | H/M    | M      | M/L |
+|            | Low    | M      | M/L    | L   |
+
+We use the [CodeHawks](https://docs.codehawks.com/hawks-auditors/how-to-evaluate-a-finding-severity) severity matrix to determine severity. See the documentation for more details.
+
+# Audit Details 
+The findings described in this document correspond the following commit hash:
+- Commit Hash: 22bbbb2c47f3f2b78c1b134590baf41383fd354f
+- In Scope:
+
+
+## Scope 
+
+```
+./src/
+--- PuppyRaffle.sol
+```
+## Roles
+
+Owner - Deployer of the protocol, has the power to change the wallet address to which fees are sent through the `changeFeeAddress` function.
+Player - Participant of the raffle, has the power to enter the raffle with the `enterRaffle` function and refund value through `refund` function.
+
+
+## Issues found
+
+| Severity          | Number of issues found |
+| ----------------- | ---------------------- |
+| High              | 3                      |
+| Medium            | 3                      |
+| Low               | 1                      |
+| Info              | 4                      |
+| Gas Optimizations | 2                      |
+| Total             | 13                      |
+
+# Findings
+
+# High
+
+
 ### [H-1] Upadting State Variable After Low Level Call Leads To ReentracyAttack ,Means All The Fund Can Be Stealed.
 
 **Description:** The `PuppyRaffle::refund` function updates state variable `PuppfyRaffle::players` array sendeing sending value to the caller.
@@ -287,6 +399,9 @@ function testTotalFeesOverflow() public playersEntered {
 2. Update The Version Of The Solidity To 0.8.0 Or More.
 3. Use Libray From <a href ="https://docs.openzeppelin.com/contracts/4.x/utilities#math">`Openzeppelin Math Libray`</a>  For Arithmatic Operation.
 
+
+# Medium
+
 ### [M-1] Looping Through Array For Checking Duplicates Leads To DOS Attack, Which Causes Rise In Gas For Later Participants. 
 
 **Description:** At `PuffyRaffle:enterRaffle` checks for duplicates of players address.
@@ -409,7 +524,7 @@ if the some malicious actor send some ether toh contract and the contract balanc
 
 **Recommended Mitigation:** Don't Compare It Contract Balance, If The Fee Amount is reached Widthdrwa The Fees. 
 
-
+# Low 
 
 ### [L-1] At `PuppyRaffle::getPlayersIndex` for non-exiting it returns 0 (Zero), but i checks the player insex from the arry and in the array at index 0(Zero) there will players which perheps create confusion among the player that he/she is not active.
 
@@ -432,40 +547,7 @@ he will get 0 and perheps he can think that he is not in the array and try to re
 or better can be used `int128` which will return `-1` if the players is not in the array.
 
 
-
-# Gas 
-### [G-1] Unchanged varibales shloud be used with keword immubale , constant.
-
-Reading from state varible is more expensive than reading from immutable or constant.
-
-**Recommended Mitigation**
-
-- At `PuppyRaffle::raffleDuration` should be `immutable`.
-- At `PuppyRaffle::commonImageUri` should be `constant`.
-- At `PuppyRaffle::rareImageUri` should be `constant`.
-- At `PuppyRaffle::legendaryImageUri` should be `constant`.
-
-
-
-### [G-2] Storage varibales in loops should be cached. 
-
-Using `players.length` to read from states is gas exepnsive, using canced varible in memory is gas efficient.
-
-```diff
--     for (uint256 i = 0; i < players.length - 1; i++) {
--            for (uint256 j = i + 1; j < players.length; j++) {
--               require(players[i] != players[j], "PuppyRaffle: Duplicate player");
--            }
--        }
-
-+   uint256 totalPlayers = players.length;
-+   for (uint256 i = 0; i < totalPlayers - 1; i++) {
-+            for (uint256 j = i + 1; j < totalPlayers; j++) {
-+                require(players[i] != players[j], "PuppyRaffle: Duplicate player");
-+            }
-+        }
-```
-
+# Informational
 
 ### [I-1] Solidity pragma should be specific, not wide.
 
@@ -516,6 +598,37 @@ uint256 fee = (totalAmountCollected * 20) / 100;
 uint256 private constant PRIZE_POOL=80
 uint256 private constant FEE=20
 uint256 private constant PRECISION=100 
-```
+
+# Gas 
 
 
+### [G-1] Unchanged varibales shloud be used with keword immubale , constant.
+
+Reading from state varible is more expensive than reading from immutable or constant.
+
+**Recommended Mitigation**
+
+- At `PuppyRaffle::raffleDuration` should be `immutable`.
+- At `PuppyRaffle::commonImageUri` should be `constant`.
+- At `PuppyRaffle::rareImageUri` should be `constant`.
+- At `PuppyRaffle::legendaryImageUri` should be `constant`.
+
+
+
+### [G-2] Storage varibales in loops should be cached. 
+
+Using `players.length` to read from states is gas exepnsive, using canced varible in memory is gas efficient.
+
+```diff
+-     for (uint256 i = 0; i < players.length - 1; i++) {
+-            for (uint256 j = i + 1; j < players.length; j++) {
+-               require(players[i] != players[j], "PuppyRaffle: Duplicate player");
+-            }
+-        }
+
++   uint256 totalPlayers = players.length;
++   for (uint256 i = 0; i < totalPlayers - 1; i++) {
++            for (uint256 j = i + 1; j < totalPlayers; j++) {
++                require(players[i] != players[j], "PuppyRaffle: Duplicate player");
++            }
++        }
