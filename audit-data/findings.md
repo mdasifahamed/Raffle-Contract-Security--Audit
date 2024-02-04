@@ -1,90 +1,3 @@
-### [M-#] Looping Through Array For Checking Duplicates Leads To DOS Attack, Which Causes Rise In Gas For Later Participants. 
-
-**Description:** At `PuffyRaffle:enterRaffle` checks for duplicates of players address.
-```javascript
-@>      // Check for duplicates
-        // @audit DOS
-        for (uint256 i = 0; i < players.length - 1; i++) {
-            for (uint256 j = i + 1; j < players.length; j++) {
-                require(players[i] != players[j], "PuppyRaffle: Duplicate player");
-            }
-        }
-
-``` 
-As the `PuffyRaffle:players` array gets largers the cost of gas will be raised as more iterration will be done on reading state varibale s `players` array. This leads to that participants who enter first will pay less gas than who enters later this will create discouraegment amount the users to use the protocol and there will be rush to use the protocol first
-
-**Impact:**  The more players enter the more gas price rises. Which Creates Discouragement Amount The User. And Will Create A Rush To Join The Protocol.
-
-**Proof of Concept:**
-Check Out The Test Function of `PuffyRaffleTest.t.sol:: testDosAttack`.
-
-<details>
-<summary>
-    POC
-</summary>
-
-```javascript
-        function testDosAttack() public{
-        vm.txGasPrice(1);
-
-        uint256 playersNumbers = 100;
-
-        address [] memory players = new address[](playersNumbers);
-
-        // Dummy first array of 100
-        for(uint256 i =0; i< playersNumbers; i++){
-            players[i] = address(i);
-
-        }
-
-       uint256 gasStart1 = gasleft();
-
-        puppyRaffle.enterRaffle{value: entranceFee * playersNumbers}(players);
-
-        uint256 gasEnd1 = gasleft();
-        
-        // gas used For First 100 plyaers enetrance 
-        uint256 gasUsed1 = gasStart1 - gasEnd1;
-
-
-        address [] memory players2 = new address[](playersNumbers);
-
-        for(uint256 i =0; i< playersNumbers; i++){
-            players2[i] = address(i+playersNumbers);
-
-        }
-
-        uint256 gasStart2 = gasleft();
-
-        puppyRaffle.enterRaffle{value: entranceFee * playersNumbers}(players2);
-
-        uint256 gasEnd2 = gasleft();
-
-        // gas used For Second 100 plyaers enetrance 
-        uint256 gasUsed2 = gasStart2 - gasEnd2;
-        console.log("Gas Used For First 100 Players enterance", gasUsed1);
-        console.log("Gas Used For Second 100 Players enterance", gasUsed2);
-
-
-        assert(gasUsed2> gasUsed1);
-
-    }
-
-```
-
-</details>
-
-run the test 
-```
-forge test --match-test testDosAttack
-```
-
-**Recommended Mitigation:** There Are Few Recommended Mitigations.
-1. Consider Adding Duplicate Address. As user Can Create Multiple Address From Wallet Add them To The Array Which Also   Will be Diffrent Addres Address But Created By Same User.
-2. Use Players Id Which Provide Every single A id And It Maps To A Mapping And Check that Mapping.
-
-
-
 ### [H-1] Upadting State Variable After Low Level Call Leads To ReentracyAttack ,Means All The Fund Can Be Stealed.
 
 **Description:** The `PuppyRaffle::refund` function updates state variable `PuppfyRaffle::players` array sendeing sending value to the caller.
@@ -243,7 +156,7 @@ Find More About `ReentrancyGuard` From  <a href = "https://docs.openzeppelin.com
 
 
 
-### [H-#] Generating Random Random Number On Chain Is Predictable, Leads To Successfully Guess Winner.
+### [H-2] Generating Random Random Number On Chain Is Predictable, Leads To Successfully Guess Winner.
 
 **Description:** At The `PuppyRaffle::selectWinner` function selecting wiiner index using on cahin random winner is highly vunrable `uint256 winnerIndex =int256(keccak256(abi.encodePacked(msg.sender, block.timestamp, block.difficulty))) % players.length;`. Here `block.timestamp` is adjsutable by the miner and `block.difficulty` is not a tru difficulty it come from previous block which is open to miner. See more details on <a href="https://eips.ethereum.org/EIPS/eip-4399">`EIP-4339`</a> at security sections.
 
@@ -321,12 +234,159 @@ contract OverFlow{
 ```
 </details>
 
+type and hit enter
+```
+forge test --match-test testTotalFeesOverflow -vvv
+```
+<details>
+<summary>PuppyRaffleOverFlow Test Code</summary>
+
+```javascript
+
+function testTotalFeesOverflow() public playersEntered {
+        // We finish a raffle of 4 to collect some fees
+        vm.warp(block.timestamp + duration + 1);
+        vm.roll(block.number + 1);
+        puppyRaffle.selectWinner();
+        uint256 startingTotalFees = puppyRaffle.totalFees();
+        // startingTotalFees = 800000000000000000
+
+        // We then have 89 players enter a new raffle
+        uint256 playersNum = 89;
+        address[] memory players = new address[](playersNum);
+        for (uint256 i = 0; i < playersNum; i++) {
+            players[i] = address(i);
+        }
+        puppyRaffle.enterRaffle{value: entranceFee * playersNum}(players);
+        // We end the raffle
+        vm.warp(block.timestamp + duration + 1);
+        vm.roll(block.number + 1);
+
+        // And here is where the issue occurs
+        // We will now have fewer fees even though we just finished a second raffle
+        puppyRaffle.selectWinner();
+
+        uint256 endingTotalFees = puppyRaffle.totalFees();
+        console.log("ending total fees", endingTotalFees);
+        assert(endingTotalFees < startingTotalFees);
+
+        // We are also unable to withdraw any fees because of the require check
+        vm.prank(puppyRaffle.feeAddress());
+        vm.expectRevert("PuppyRaffle: There are currently players active!");
+        puppyRaffle.withdrawFees();
+    }
+
+
+```
+</details>
+
 
 
 **Recommended Mitigation:** There Are Few Mitigation Steps That Van Be Taken.
 1. Check For Expected Value After The Arithmatic Opeartion.
 2. Update The Version Of The Solidity To 0.8.0 Or More.
 3. Use Libray From <a href ="https://docs.openzeppelin.com/contracts/4.x/utilities#math">`Openzeppelin Math Libray`</a>  For Arithmatic Operation.
+
+### [M-1] Looping Through Array For Checking Duplicates Leads To DOS Attack, Which Causes Rise In Gas For Later Participants. 
+
+**Description:** At `PuffyRaffle:enterRaffle` checks for duplicates of players address.
+```javascript
+@>      // Check for duplicates
+        // @audit DOS
+        for (uint256 i = 0; i < players.length - 1; i++) {
+            for (uint256 j = i + 1; j < players.length; j++) {
+                require(players[i] != players[j], "PuppyRaffle: Duplicate player");
+            }
+        }
+
+``` 
+As the `PuffyRaffle:players` array gets largers the cost of gas will be raised as more iterration will be done on reading state varibale s `players` array. This leads to that participants who enter first will pay less gas than who enters later this will create discouraegment amount the users to use the protocol and there will be rush to use the protocol first
+
+**Impact:**  The more players enter the more gas price rises. Which Creates Discouragement Amount The User. And Will Create A Rush To Join The Protocol.
+
+**Proof of Concept:**
+Check Out The Test Function of `PuffyRaffleTest.t.sol:: testDosAttack`.
+
+<details>
+<summary>
+    POC
+</summary>
+
+```javascript
+        function testDosAttack() public{
+        vm.txGasPrice(1);
+
+        uint256 playersNumbers = 100;
+
+        address [] memory players = new address[](playersNumbers);
+
+        // Dummy first array of 100
+        for(uint256 i =0; i< playersNumbers; i++){
+            players[i] = address(i);
+
+        }
+
+       uint256 gasStart1 = gasleft();
+
+        puppyRaffle.enterRaffle{value: entranceFee * playersNumbers}(players);
+
+        uint256 gasEnd1 = gasleft();
+        
+        // gas used For First 100 plyaers enetrance 
+        uint256 gasUsed1 = gasStart1 - gasEnd1;
+
+
+        address [] memory players2 = new address[](playersNumbers);
+
+        for(uint256 i =0; i< playersNumbers; i++){
+            players2[i] = address(i+playersNumbers);
+
+        }
+
+        uint256 gasStart2 = gasleft();
+
+        puppyRaffle.enterRaffle{value: entranceFee * playersNumbers}(players2);
+
+        uint256 gasEnd2 = gasleft();
+
+        // gas used For Second 100 plyaers enetrance 
+        uint256 gasUsed2 = gasStart2 - gasEnd2;
+        console.log("Gas Used For First 100 Players enterance", gasUsed1);
+        console.log("Gas Used For Second 100 Players enterance", gasUsed2);
+
+
+        assert(gasUsed2> gasUsed1);
+
+    }
+
+```
+
+</details>
+
+run the test 
+```
+forge test --match-test testDosAttack
+```
+
+**Recommended Mitigation:** There Are Few Recommended Mitigations.
+1. Consider Adding Duplicate Address. As user Can Create Multiple Address From Wallet Add them To The Array Which Also   Will be Diffrent Addres Address But Created By Same User.
+2. Use Players Id Which Provide Every single A id And It Maps To A Mapping And Check that Mapping.
+
+
+
+### [M-2] At `PuppyRaffle::selectWinner` fund sending are not safe for smart contract, Funds can be locked and winner not be able to receive prizepool.
+
+**Description:**  At `PuppyRaffle::selectWinner` function it sends fund to the winner uisng low-level call if a winner is smart-contract i.e (A MultiSig Wallet) and it `fallback` or `receive` function is not set correctly it will  not be able to accept the the wiinig prize pool and user will try again to thinking that he has not won but this will result waste of gas and the function `PuppyRaffle::selectWinner` will not reset the array.
+
+**Impact:** if the winner is a contract and that is prpoerly configured with `fallback` or `receive` it will not be able to accept prizePool. 
+
+**Proof of Concept:**
+
+1. A Smart Contract Enters The Raffle.
+2. And Wins The Raffle.
+3. But The Winning Smart Contract Does Not Have `fallback` and `receive` The Contract Will Not Be Able To Accept Ether.
+
+**Recommended Mitigation:** The Mitigation Can Be Done By Using `Push and Pull` method. Let the User Store Their Fund on the Contract. And After The SuccecssFull raflle Let The Winner To Pull Their Prize From The Contract. Which Also Reduce The Risk Of Using Low-Level Call.
 
 
 
@@ -348,7 +408,8 @@ he will get 0 and perheps he can think that he is not in the array and try to re
 
 **Recommended Mitigation:** The easiet way to prevent this is use revert the transaction if the player is not in the array and return 0 zero index for exiting player.
 
-or better can be used `int128` which will return `-1` if the players is not in the array
+or better can be used `int128` which will return `-1` if the players is not in the array.
+
 
 
 # Gas 
@@ -385,13 +446,13 @@ Using `players.length` to read from states is gas exepnsive, using canced varibl
 ```
 
 
-### [L-1] Solidity pragma should be specific, not wide.
+### [I-1] Solidity pragma should be specific, not wide.
 
 It is recommended to use sepecific verison of Solidity in the `PuupyRaffle.sol` use `pragma solidity 0.8.0` instead of `pragma solidity ^0.7.6`.
 
 - Found in  `./src/PuupyRaffle.sol`.
 
-### [L-2] using outdated Version of Solidity is not recommended.
+### [I-2] using outdated Version of Solidity is not recommended.
 
 `solc` frequently releases new compiler versions. Using an old version prevents access to new Solidity security checks. We also recommend avoiding complex `pragma` statement.
 
@@ -408,7 +469,7 @@ Deploy with the following Solidity versions:
 
 Use a simple pragma version that allows any of these versions. Consider using the latest version of Solidity for testing.
 
-### [L-3]: Missing checks for `address(0)` when assigning values to address state variables
+### [I-3]: Missing checks for `address(0)` when assigning values to address state variables
 
 Assigning values to address state variables without checking for `address(0)`.
 
@@ -418,7 +479,7 @@ Assigning values to address state variables without checking for `address(0)`.
 	        feeAddress = _feeAddress;
 	```
 
-### [L-4]: Using Magic numbers in the codebase is not recommeded.
+### [I-4]: Using Magic numbers in the codebase is not recommeded.
 
 Using number literals on the codebase is confusing to read use constant value for increasing readability of the code.
 
@@ -435,5 +496,8 @@ uint256 private constant PRIZE_POOL=80
 uint256 private constant FEE=20
 uint256 private constant PRECISION=100 
 ```
+
+reports left to write are overflow check with `testTotalFeesOverflow` , smart wallet refused to accept ether if it is not set fallback or receive fucntion
+report mishandling of ether at the withdrw fees, events missing
 
 
